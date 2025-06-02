@@ -1,0 +1,87 @@
+import { Request, Response } from "express";
+import User from "../models/user.model.js";
+import bcrypt from "bcryptjs";
+
+export const SignUp = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { username, email, password } = req.body;
+
+    if (!username || !email || !password) {
+      res.status(400).json({ message: "Please provide all the fields" });
+      return;
+    }
+
+    // check if user already exists
+
+    const existingUser = await User.findOne({ email }).lean();
+
+    if (existingUser) {
+      res.status(400).json({ message: "User already exists" });
+      return;
+    }
+
+    // hash the password
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      username,
+      email,
+      password: hashedPassword,
+    });
+
+    user.save();
+
+    const { password: _, ...userWithoutPassword } = user;
+
+    res.status(201).json({
+      message: "User created successfully",
+      user: userWithoutPassword,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+    console.error(error);
+    return;
+  }
+};
+export const Login = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      res.status(400).json({ message: "Please provide all the fields" });
+      return;
+    }
+
+    const user = await User.findOne({ email }).lean();
+
+    if (!user) {
+      res.status(400).json({ message: "User not found, Please Signup first!" });
+      return;
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      res.status(400).json({ message: "Invalid password!" });
+      return;
+    }
+
+    const { password: _, ...userWithoutPassword } = user;
+
+    res.status(200).json({
+      message: "Login successful",
+      user: userWithoutPassword,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+    console.error(error);
+    return;
+  }
+};
+export const Logout = async (req: Request, res: Response): Promise<void> => {
+  res.send("logout");
+};
+
+//TODO: ADD JWT AUTHENTICATION
