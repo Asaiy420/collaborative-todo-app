@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
-import { generateToken } from "../utils/jwt.js";
+import { clearTokenCookie, generateToken, setTokenCookie } from "../utils/jwt.js";
 
 export const SignUp = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -35,6 +35,8 @@ export const SignUp = async (req: Request, res: Response): Promise<void> => {
     // generate token
     const token = generateToken(user._id.toString());
     const { password: _, ...userWithoutPassword } = user.toObject();
+
+    setTokenCookie(res, token);
 
     res.status(201).json({
       message: "User created successfully",
@@ -72,6 +74,8 @@ export const Login = async (req: Request, res: Response): Promise<void> => {
     // generate token
     const token = generateToken(user._id.toString());
     const { password: _, ...userWithoutPassword } = user;
+    
+    setTokenCookie(res, token);
 
     res.status(200).json({
       message: "Login successful",
@@ -86,7 +90,8 @@ export const Login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 export const Logout = async (req: Request, res: Response): Promise<void> => {
-  res.send("logout");
+  clearTokenCookie(res);
+  res.status(200).json({ message: "Logout successful" });
 };
 
 //TODO: ADD JWT AUTHENTICATION
