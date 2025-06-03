@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
+import { generateToken } from "../utils/jwt.js";
 
 export const SignUp = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -30,12 +31,14 @@ export const SignUp = async (req: Request, res: Response): Promise<void> => {
       password: hashedPassword,
     });
 
-    user.save();
-
-    const { password: _, ...userWithoutPassword } = user;
+    await user.save();
+    // generate token
+    const token = generateToken(user._id.toString());
+    const { password: _, ...userWithoutPassword } = user.toObject();
 
     res.status(201).json({
       message: "User created successfully",
+      token,
       user: userWithoutPassword,
     });
   } catch (error) {
@@ -66,11 +69,13 @@ export const Login = async (req: Request, res: Response): Promise<void> => {
       res.status(400).json({ message: "Invalid password!" });
       return;
     }
-
+    // generate token
+    const token = generateToken(user._id.toString());
     const { password: _, ...userWithoutPassword } = user;
 
     res.status(200).json({
       message: "Login successful",
+      token,
       user: userWithoutPassword,
     });
 
