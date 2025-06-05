@@ -10,7 +10,7 @@ export interface AuthRequest extends Request {
 }
 
 export const protectRoute = async (
-  req: AuthRequest,
+  req: AuthRequest, 
   res: Response,
   next: NextFunction
 ): Promise<void> => {
